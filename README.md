@@ -1,4 +1,4 @@
-# Synthetic Admin Dashboard Honeypot
+# Northbridge Synthetic Admin Dashboard Honeypot
 
 A **front-end admin dashboard honeypot** designed for **scam and attacker infrastructure analysis**.  
 This project simulates a realistic internal administration panel backed by a lightweight reverse proxy, intended to observe attacker behavior, interaction patterns, and data-harvesting attempts in a controlled, non-production environment.
