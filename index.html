@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Northbridge Internal Administration</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body { font-family: system-ui, sans-serif; background:#0f172a; color:#e5e7eb; margin:0 }
+header, footer { background:#020617; padding:12px 20px; font-size:14px }
+main { padding:40px 20px; max-width:1200px; margin:auto }
+.card { background:#020617; border:1px solid #1e293b; padding:24px; border-radius:8px }
+.hidden { display:none }
+input { width:100%; padding:8px; margin-top:8px; background:#020617; color:#e5e7eb; border:1px solid #334155; border-radius:4px }
+button { background:#1e40af; color:#fff; border:none; padding:8px 10px; border-radius:4px; cursor:pointer; margin-top:8px }
+button:hover { background:#1d4ed8 }
+.nav button { width:100%; background:#020617; border:1px solid #334155; margin-top:6px }
+table { width:100%; border-collapse:collapse; margin-top:12px }
+th,td { border:1px solid #334155; padding:6px 8px; font-size:13px }
+th { background:#020617 }
+.small { font-size:12px; color:#94a3b8 }
+canvas { background:#020617; border:1px solid #334155; margin-top:20px }
+pre { background:#020617; padding:10px; border:1px solid #334155; font-size:12px; height:260px; overflow:auto }
+.legend span { margin-right:16px; font-size:12px }
+</style>
+</head>
+
+<body>
+
+<header>Northbridge Systems — Internal Administration</header>
+
+<main>
+
+<section id="login" class="card">
+<h1>Administrator Login</h1>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="submitLogin()">Sign In</button>
+<p id="loginMessage"></p>
+</section>
+
+<section id="dashboard" class="card hidden">
+<h2>Admin Dashboard</h2>
+<p class="small">Non‑Production · Read‑Only · Monitored</p>
+
+<div class="nav">
+<button onclick="nav('users')">User Accounts</button>
+<button onclick="nav('employees')">Employees</button>
+<button onclick="nav('financials')">Financial Overview</button>
+<button onclick="nav('payments')">Payment Tokens</button>
+<button onclick="nav('logs')">System Logs</button>
+<button onclick="nav('clients')">Client Export</button>
+</div>
+
+<div id="panel"></div>
+</section>
+
+</main>
+
+<footer>
+Security research system · All data is synthetic · No real persons or payment instruments
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ================= RNG ================= */
+let seed = sessionStorage.seed || (sessionStorage.seed = Math.floor(Math.random()*1e9));
+function rand(){ seed=(seed*48271)%0x7fffffff; return seed/0x7fffffff }
+
+/* ================= LOGIN ================= */
+let attempts = Number(sessionStorage.attempts || 0);
+function submitLogin(){
+ attempts++; sessionStorage.attempts = attempts;
+ if(attempts < 4) loginMessage.innerText = "Invalid username or password.";
+ else { login.classList.add("hidden"); dashboard.classList.remove("hidden"); }
+}
+
+/* ================= DATA POOLS ================= */
+const first=["alex","jordan","sam","taylor","morgan","casey","riley","jamie","logan","drew"];
+const last=["miller","smith","carter","jones","brown","reed","adams","turner","cole","parker"];
+const roles=["Analyst","Manager","Auditor","Operations","Finance","Support","Compliance"];
+const depts=["IT","Finance","Operations","HR","Compliance","Legal","Security"];
+const cities=["Northport","Lakeview","Riverton","Ashford","Brookfield"];
+const services=["Managed Hosting","Data Processing","Risk Analysis","Compliance Review","Security Monitoring"];
+
+const fakeDomains=[
+ "northbridge-group.internal",
+ "ashford-solutions.corp",
+ "riverton-holdings.internal",
+ "brookfield-analytics.corp",
+ "lakeview-consulting.internal",
+ "turner-industries.corp"
+];
+
+/* ================= HELPERS ================= */
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function fakeUsername(){ return `${first[Math.floor(rand()*first.length)]}.${last[Math.floor(rand()*last.length)]}${Math.floor(rand()*991+9)}` }
+function fakeCardNumber(){ let n="4"; for(let i=0;i<15;i++) n+=Math.floor(rand()*10); return n.replace(/(.{4})/g,"$1 ").trim(); }
+
+/* ================= FINANCIAL DATA ================= */
+const financials=[];
+for(let y=2015;y<=2024;y++){
+ for(let q=1;q<=4;q++){
+  financials.push({
+   label:`${y} Q${q}`,
+   revenue:+(90+rand()*70).toFixed(1),
+   expenses:+(55+rand()*35).toFixed(1)
+  });
+ }
+}
+
+/* ================= NAV ================= */
+function nav(section){
+ const p=document.getElementById("panel");
+
+ if(section==="users"){
+  let rows=`<tr><td>admin</td><td>Super Administrator</td><td>Enabled</td></tr>`;
+  for(let i=0;i<30;i++)
+   rows+=`<tr><td>${fakeUsername()}</td><td>${roles[Math.floor(rand()*roles.length)]}</td><td>${rand()>.25?"Enabled":"Disabled"}</td></tr>`;
+  p.innerHTML=`<h3>User Accounts</h3><table><tr><th>Username</th><th>Role</th><th>Status</th></tr>${rows}</table>`;
+ }
+
+ if(section==="employees"){
+  let rows="";
+  for(let i=0;i<40;i++)
+   rows+=`<tr><td>EMP-${Math.floor(rand()*90000+10000)}</td><td>${depts[Math.floor(rand()*depts.length)]}</td><td>${rand()>.15?"Active":"Inactive"}</td></tr>`;
+  p.innerHTML=`<h3>Employees</h3><table><tr><th>ID</th><th>Department</th><th>Status</th></tr>${rows}</table>`;
+ }
+
+ if(section==="financials"){
+  let rows="";
+  financials.forEach(f=>{
+   rows+=`<tr><td>${f.label}</td><td>$${f.revenue}M</td><td>$${f.expenses}M</td></tr>`;
+  });
+  p.innerHTML=`
+   <h3>Financial Overview (10 Years)</h3>
+   <table><tr><th>Period</th><th>Revenue</th><th>Expenses</th></tr>${rows}</table>
+   <div class="legend">
+    <span style="color:#1e40af">■ Revenue</span>
+    <span style="color:#64748b">■ Expenses</span>
+    <span style="color:#22c55e">— Projection</span>
+   </div>
+   <canvas id="barChart" width="1000" height="300"></canvas>
+   <canvas id="lineChart" width="1000" height="300"></canvas>`;
+  drawBarChart();
+  drawLineChart();
+ }
+
+ if(section==="logs"){
+  p.innerHTML=`<h3>System Logs</h3><pre id="log"></pre>`;
+  setInterval(()=>{
+   log.textContent+=`${new Date().toISOString()} svc${Math.floor(rand()*6)}: ${["INFO","WARN","ERROR"][Math.floor(rand()*3)]} processed\n`;
+   log.scrollTop=log.scrollHeight;
+  },2000);
+ }
+
+ if(section==="clients"){
+  p.innerHTML=`<h3>Client Export</h3>
+  <p class="small">Synthetic PDF · Non‑Production</p>
+  <button onclick="generateClientPDF()">Download PDF</button>`;
+ }
+
+ /* ================= PAYMENT TOKENS ================= */
+ if(section==="payments"){
+  let rows="";
+  for(let i=0;i<20;i++){
+    const masked = "**** **** **** " + Math.floor(rand()*9000+1000);
+    const status = rand()>.35 ? "Active" : "Expired";
+    const type   = rand()>.5 ? "Reference Token" : "Secure Authorization Badge";
+    const id     = "TOK-" + Math.floor(rand()*900000+100000);
+
+    rows += `
+    <tr>
+      <td>${id}</td>
+      <td>
+        <span id="pan-${i}">${masked}</span><br>
+        <button onclick="document.getElementById('pan-${i}').innerText='${fakeCardNumber()}'">
+          View Full PAN
+        </button>
+      </td>
+      <td>${type}</td>
+      <td>${status}</td>
+    </tr>`;
+  }
+
+  p.innerHTML = `
+    <h3>Payment Tokens</h3>
+    <p class="small">
+      Synthetic tokens · Non‑Production · Numbers regenerate per view
+    </p>
+    <table>
+      <tr>
+        <th>Token ID</th>
+        <th>Card Reference</th>
+        <th>Type</th>
+        <th>Status</th>
+      </tr>
+      ${rows}
+    </table>
+  `;
+ }
+}
+
+/* ================= CHARTS ================= */
+function drawBarChart(){
+ const c=document.getElementById("barChart");
+ const ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+ ctx.fillStyle="#94a3b8";
+ ctx.fillText("USD (Millions)",10,12);
+
+ financials.forEach((f,i)=>{
+  const x=i*22+40;
+  ctx.fillStyle="#1e40af";
+  ctx.fillRect(x,280-f.revenue*1.5,8,f.revenue*1.5);
+  ctx.fillStyle="#64748b";
+  ctx.fillRect(x+10,280-f.expenses*1.5,8,f.expenses*1.5);
+  if(i%8===0) ctx.fillText(f.label,x-10,295);
+ });
+}
+
+function drawLineChart(){
+ const c=document.getElementById("lineChart");
+ const ctx=c.getContext("2d");
+ ctx.clearRect(0,0,c.width,c.height);
+
+ ctx.strokeStyle="#1e40af";
+ ctx.beginPath();
+ financials.forEach((f,i)=>{
+  const x=i*22+40;
+  const y=280-f.revenue*1.5;
+  if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+ });
+ ctx.stroke();
+
+ ctx.setLineDash([6,4]);
+ ctx.strokeStyle="#22c55e";
+ ctx.beginPath();
+ let last=financials.at(-1).revenue;
+ ctx.moveTo((financials.length-1)*22+40,280-last*1.5);
+ for(let i=1;i<=5;i++){
+  last*=1.05;
+  const x=(financials.length+i)*22+40;
+  const y=280-last*1.5;
+  ctx.lineTo(x,y);
+  ctx.fillText(`FY${2024+i}`,x-10,295);
+ }
+ ctx.stroke();
+ ctx.setLineDash([]);
+}
+
+/* ================= CLIENT PDF ================= */
+function generateClientPDF(){
+ const { jsPDF } = window.jspdf;
+ const doc = new jsPDF("p","mm","a4");
+
+ doc.setFontSize(14);
+ doc.text("Client Export — Synthetic Dataset (Non‑Production)",14,15);
+ doc.setFontSize(9);
+ doc.text("All entities listed are fictional and for security research only.",14,22);
+
+ let y=32;
+ const partnerships=["Strategic Partner","Preferred Vendor","Managed Services Client","Compliance Advisory"];
+ const companyTypes=["Group","Consulting","Holdings","Solutions"];
+
+ for(let i=0;i<25;i++){
+  const fn=first[Math.floor(rand()*first.length)];
+  const ln=last[Math.floor(rand()*last.length)];
+  const domain=fakeDomains[Math.floor(rand()*fakeDomains.length)];
+  const email=`${fn}.${ln}@${domain}`;
+
+  doc.setFont("helvetica","bold");
+  doc.text(`${cap(fn)} ${cap(ln)} — ${cap(ln)} ${companyTypes[Math.floor(rand()*4)]}`,14,y); y+=5;
+  doc.setFont("helvetica","normal");
+  doc.text(`Address: ${Math.floor(rand()*900+100)} ${cities[Math.floor(rand()*cities.length)]} Park Dr`,14,y); y+=4;
+  doc.text(`Partnership: ${partnerships[Math.floor(rand()*partnerships.length)]}`,14,y); y+=4;
+  doc.text(`Service: ${services[Math.floor(rand()*services.length)]}`,14,y); y+=4;
+  doc.text(`Annual Contract: $${(rand()*25000+7500).toFixed(0)}`,14,y); y+=4;
+  doc.text(`Phone: 555-01${Math.floor(rand()*90+10)}`,14,y); y+=4;
+  doc.text(`Email: ${email}`,14,y); y+=6;
+
+  if(y>270){ doc.addPage(); y=20; }
+ }
+ doc.save("clients_nonprod.pdf");
+}
+</script>
+
+</body>
+</html>
