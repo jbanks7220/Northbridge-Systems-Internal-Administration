@@ -1,5 +1,10 @@
 # Synthetic Admin Dashboard Honeypot
 
+## Live Demo
+
+[![View Live Demo](https://img.shields.io/badge/View%20Live%20Demo-1e40af?style=for-the-badge&logo=google-chrome&logoColor=white)](https://northbridge-systems-internal.onrender.com/)
+
+
 A **front-end admin dashboard honeypot** designed for **scam and attacker infrastructure analysis**.  
 This project simulates a realistic internal administration panel backed by a lightweight reverse proxy, intended to observe attacker behavior, interaction patterns, and data-harvesting attempts in a controlled, non-production environment.
 
