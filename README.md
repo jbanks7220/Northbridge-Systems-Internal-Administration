@@ -7,7 +7,8 @@ This project simulates a realistic internal administration panel backed by a lig
 
 ## Live Demo
 
-[![View Live Demo](https://img.shields.io/badge/View%20Live%20Demo-1e40af?style=for-the-badge&logo=google-chrome&logoColor=white)](https://northbridge-systems-internal.onrender.com/)
+https://github.com/user-attachments/assets/d13bb799-c64c-42eb-9715-bcb71d8f3f18
+
 ---
 
 ## Video Demo
